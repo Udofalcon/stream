@@ -1,14 +1,19 @@
 import { IncomingMessage } from "http";
-import https from "https";
-import { RequestOptions } from "https";
+import https, { RequestOptions } from "https";
 
-export const oauth = {
-    getAccessToken: (client_id: string, client_secret: string): Promise<any> => {
+export const bots = {
+    list: new Array<string>(),
+
+    getBots: (): Promise<Array<string>> => {
+        if (bots.list.length) {
+            return Promise.resolve(bots.list);
+        }
+
         return new Promise((resolve, reject) => {
             const options: RequestOptions = {    
-                hostname: 'id.twitch.tv',
-                path: `/oauth2/token?client_id=${client_id}&client_secret=${client_secret}&grant_type=client_credentials`,
-                method: 'POST'
+                hostname: 'api.twitchinsights.net',
+                path: `/v1/bots/all`,
+                method: 'GET'
             };
             const callback = (res: IncomingMessage) => {
                 var data = '';
@@ -18,7 +23,11 @@ export const oauth = {
                 });
     
                 res.on('end', () => {
-                    resolve(JSON.parse(data).access_token);
+                    var bot_data: Array<any> = JSON.parse(data).bots;
+
+                    bots.list = bot_data.map(bot => bot[0]);
+
+                    resolve(bots.list);
                 });
             };
 
